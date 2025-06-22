@@ -286,11 +286,7 @@ document.addEventListener('DOMContentLoaded', () => {
             await apiFunction();
         } catch (error) {
             console.error("API Interaction Error:", error);
-            if (error.message.includes('403')) {
-                alert("Akses API Ditolak (Error 403: Referer Blocked).\n\nIni karena pembatasan keamanan pada API Key Anda.\n\nCARA MEMPERBAIKI:\n1. Buka Google AI Studio.\n2. Edit API Key Anda.\n3. Di bagian 'Website restrictions', klik 'ADD A WEBSITE'.\n4. Salin dan tempel URL dari pesan error di console (lihat di bawah log ini).");
-            } else {
-                alert("Terjadi kesalahan. Silakan coba lagi.");
-            }
+            alert("Terjadi kesalahan saat memproses permintaan. Lihat console untuk detail.");
             coins += cost; // Refund coins on failure
             saveCoins();
             updateCoinDisplay();
@@ -387,6 +383,7 @@ document.addEventListener('DOMContentLoaded', () => {
             alert("Silakan unggah foto Wajah terlebih dahulu di dalam pop-up.");
             return;
         }
+
         handleApiInteraction(createCharacterBtn, 3, async () => {
             const apiPromises = [];
             const selectedStyle = characterStyleSelect.value;
@@ -434,7 +431,7 @@ PENTING: Jika Anda mendeteksi fitur yang tidak realistis (seperti warna rambut a
                 apiPromises.push(Promise.resolve(null));
             }
             if (characterImageData.accessories) {
-                const accessoriesInstruction = "Fokus pada aksesori di gambar ini (topi, kacamata, perhiasan, dll.). Deskripsikan secara detail untuk karakter gaya **${selectedStyle}**: jenis, bahan, dan warnanya. Jika tidak ada, kembalikan string kosong. Balas HANYA dengan frasa deskripsi aksesori ini, tanpa kalimat pembuka.";
+                const accessoriesInstruction = `Fokus pada aksesori di gambar ini (topi, kacamata, perhiasan, dll.). Deskripsikan secara detail untuk karakter gaya **${selectedStyle}**: jenis, bahan, dan warnanya. Jika tidak ada, kembalikan string kosong. Balas HANYA dengan frasa deskripsi aksesori ini, tanpa kalimat pembuka.`;
                 apiPromises.push(callGeminiAPI(accessoriesInstruction, [characterImageData.accessories]));
             } else {
                 apiPromises.push(Promise.resolve(null));
@@ -443,8 +440,12 @@ PENTING: Jika Anda mendeteksi fitur yang tidak realistis (seperti warna rambut a
             const [faceDesc, clothingDesc, accessoriesDesc] = await Promise.all(apiPromises);
 
             let finalDescription = faceDesc || "seseorang";
-            if (clothingDesc) finalDescription += `, mengenakan ${clothingDesc}`;
-            if (accessoriesDesc && accessoriesDesc.trim() !== '') {
+
+            // [FIXED] Added safer checks for clothing and accessories to prevent errors
+            if (clothingDesc && typeof clothingDesc === 'string' && clothingDesc.trim() !== '') {
+                finalDescription += `, mengenakan ${clothingDesc}`;
+            }
+            if (accessoriesDesc && typeof accessoriesDesc === 'string' && accessoriesDesc.trim() !== '') {
                  finalDescription += `, dengan ${accessoriesDesc}`;
             }
             
