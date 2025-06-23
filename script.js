@@ -231,7 +231,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
         
-        // URL sekarang menunjuk ke backend kita sendiri
         const apiUrl = `/api/apigemini`;
         const payload = { contents: [{ parts: parts }] };
         
@@ -251,7 +250,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const text = result?.candidates?.[0]?.content?.parts?.[0]?.text;
         
         if (text) {
-            return text.trim();
+             // Clean markdown and potential JSON artifacts
+            return text.replace(/```json/g, '').replace(/```/g, '').trim();
         } else {
             console.log("No valid response text found, full response:", result);
             throw new Error("Invalid or empty response structure from API.");
@@ -383,74 +383,109 @@ document.addEventListener('DOMContentLoaded', () => {
             alert("Silakan unggah foto Wajah terlebih dahulu di dalam pop-up.");
             return;
         }
-
+        
         handleApiInteraction(createCharacterBtn, 3, async () => {
+            const characterName = prompt("Masukkan nama untuk karakter ini:", "Karakter Baru");
+            if (!characterName) {
+                // Refund coins if user cancels the prompt
+                coins += 3;
+                saveCoins();
+                updateCoinDisplay();
+                console.log("Pembuatan karakter dibatalkan.");
+                return;
+            }
+
             const apiPromises = [];
             const selectedStyle = characterStyleSelect.value;
             
             const hairInstruction = `Deskripsikan rambut dengan sangat detail, pecah ke dalam kategori berikut:
-- **Warna Rambut:** Warna Dasar (hitam, cokelat, dll.), Highlight & Lowlight, Gradasi & Akar, dan Nada Warna (hangat, dingin).
+- **Warna Rambut:** Warna Rambut (jika warnanya tidak alami tambahkan imbuhan diwarnai).
 - **Tekstur & Pola Rambut:** Tipe Rambut (lurus, bergelombang, ikal, keriting), Detail Tekstur (gelombang longgar/rapat, ikal spiral/besar), Kondisi Helai (tebal/tipis), Kehalusan/Kekusutan (halus, frizzy, flyaways).
-- **Panjang & Potongan Rambut:** Panjang Keseluruhan (sebatas dagu, sebahu, sebatas punggung tengah, sangat panjang), Gaya Potongan/Haircut (bob, pixie, bixie, undercut, comma hair, two block, layer, blunt cut, shaggy), Poni (poni depan, curtain bangs).
+- **Panjang & Potongan Rambut:** Panjang Keseluruhan (sebatas dagu (sekitar 15-25 cm), sebahu (sekitar 25-40 cm), sebatas punggung tengah (sekitar 40-60 cm), sangat panjang (lebih dari 60 cm)), Gaya Potongan/Haircut (bob, pixie, bixie, undercut, comma hair, two block, layer, blunt cut, shaggy), Poni (poni depan, curtain bangs).
 - **Gaya & Penataan Rambut:** Penataan (tergerai, ekor kuda, dikepang), Belahan Rambut (tengah, samping), dan Aksesori (jepit, bando).
 - **Kesan & Karakteristik Unik:** Volume (tebal/kempes), Kilau (berkilau/kusam), dan Detail lain (uban, ujung berwarna).`;
             
-            let faceInstruction;
+            let vibeInstruction;
+            let styleGuideline = "";
             if (selectedStyle === 'Fiksi') {
-                faceInstruction = `Berdasarkan foto yang diunggah, analisis dan buat deskripsi karakter fiksi yang sangat detail dalam format naratif. Mulailah dengan menebak jenis kelamin, perkiraan usia, dan kemungkinan etnisnya. Kemudian, deskripsikan fitur-fitur berikut secara rinci:
-1.  **Bentuk Wajah dan Kepala:** Deskripsikan bentuk wajah secara keseluruhan (oval, bulat, dll.), dahi, bentuk pipi, garis rahang, dan dagu.
-2.  **Mata:** Deskripsikan warna mata (jika warnanya tidak alami, sebutkan warnanya apa adanya), bentuk mata, ukuran mata, bentuk dan ketebalan alis, serta bulu mata.
-3.  **Hidung:** Deskripsikan bentuk dan ukurannya.
-4.  **Mulut:** Deskripsikan ketebalan dan bentuk bibir.
-5.  **Rambut:** ${hairInstruction} (jika warna tidak alami, sebutkan sebagai 'rambut diwarnai...').
-6.  **Kulit:** Deskripsikan warna kulit (jika tidak alami, sebutkan sebagai 'dengan make up'). Sebutkan juga tanda khusus seperti tahi lalat atau lesung pipi.
-7.  **Rambut Wajah (jika ada):** Deskripsikan jenis dan gayanya.
-8.  **Demeanor:** Deskripsikan pembawaan atau sikap yang terpancar dari ekspresi wajah dan postur (misalnya, tenang, ramah, serius, dengan senyum lembut, dll.).
-9.  **Vibe:** Deskripsikan kesan atau "vibe" keseluruhan dari penampilan (misalnya, stylish, minimalis, rapi, artistik, ceria, dll.).
-Gabungkan semua poin ini menjadi satu paragraf deskriptif yang mengalir secara natural dan mendalam, bukan sebagai daftar. Balas HANYA dengan paragraf deskripsi karakter, tanpa kalimat pembuka apa pun.`;
+                vibeInstruction = `- "vibe": berikan deskripsi kesan atau "vibe" keseluruhan, dan tambahkan kata yang mengandung unsur fantasi (contoh: mystical, ethereal, otherworldly).`;
             } else { // Non Fiksi
-                faceInstruction = `Berdasarkan foto yang diunggah, analisis dan buat deskripsi karakter yang sangat detail dalam format naratif. Pertama, identifikasi negara asal atau etnis yang paling mungkin dari wajah tersebut, lalu tebak jenis kelamin dan perkiraan usianya. Mulailah deskripsi dengan format: "Seorang [jenis kelamin] dari [negara/etnis] berusia sekitar [umur] tahun...". Kemudian, lanjutkan dengan deskripsi fitur berikut:
-1.  **Bentuk Wajah dan Kepala:** Deskripsikan bentuk wajah, dahi, pipi, garis rahang, dan dagu.
-2.  **Mata:** Deskripsikan warna mata, bentuk mata (almond, bulat, monolid, sayu), ukuran, alis, dan bulu mata.
-3.  **Hidung:** Deskripsikan bentuk dan ukurannya.
-4.  **Mulut:** Deskripsikan ketebalan dan bentuk bibir, serta gigi jika terlihat.
-5.  **Rambut:** ${hairInstruction}
-6.  **Kulit:** Deskripsikan warna kulit dan tanda khusus.
-7.  **Rambut Wajah (jika ada):** Deskripsikan jenis dan gayanya.
-8.  **Demeanor:** Deskripsikan pembawaan atau sikap yang terpancar dari ekspresi wajah dan postur (misalnya, tenang, ramah, serius, dengan senyum lembut, dll.).
-9.  **Vibe:** Deskripsikan kesan atau "vibe" keseluruhan dari penampilan (misalnya, stylish, minimalis, rapi, artistik, ceria, dll.).
-PENTING: Jika Anda mendeteksi fitur yang tidak realistis (seperti warna rambut atau mata yang tidak alami), ganti dengan padanan realistis yang paling mendekati (contoh: rambut biru menjadi pirang, mata ungu menjadi biru). Gabungkan semuanya menjadi satu paragraf yang natural, bukan daftar. Balas HANYA dengan paragraf deskripsi karakter, tanpa kalimat pembuka.`;
+                vibeInstruction = `- "vibe": berikan deskripsi kesan atau "vibe" keseluruhan, dan pastikan TIDAK ADA kata yang mengandung unsur fantasi (contoh: professional, casual, sporty).`;
+                styleGuideline = `PENTING: Untuk semua deskripsi, gunakan gaya bahasa yang harfiah, objektif, dan apa adanya seperti laporan identifikasi. Hindari penggunaan metafora, perumpamaan, atau bahasa puitis.`;
             }
-
+            
+            const faceInstruction = `Berdasarkan gambar wajah yang diunggah, analisis dan kembalikan sebuah objek JSON. Balas HANYA dengan objek JSON, tanpa teks atau format lain.
+${styleGuideline}
+Objek JSON harus memiliki kunci-kunci berikut: "identity", "demeanor", "vibe", "face_shape", "eyes", "nose", "lips", "hair", "skin", "facial_hair".
+- "identity": berikan deskripsi yang berisi jenis kelamin, perkiraan usia, dan asal negara/etnis (Contoh: "Seorang pria berusia 25 tahun dari Korea").
+- "face_shape": berikan deskripsi yang mencakup bentuk wajah secara keseluruhan (oval, bulat, dll.), dahi, bentuk pipi, garis rahang, dan dagu.
+- "eyes": berikan deskripsi yang mencakup warna mata (jika warnanya tidak alami tambahkan imbuhan memakai kontak lensa), bentuk mata, ukuran mata, bentuk dan ketebalan alis, serta bulu mata.
+- "nose": berikan deskripsi yang mencakup Pangkal Hidung, Batang Hidung, Puncak Hidung, Lubang Hidung, Cuping Hidung.
+- "lips": berikan deskripsi yang mencakup ketebalan, bentuk bibir, Proporsi Bibir Atas dan Bawah, Bentuk (Cupid's Bow), Lebar Bibir, Bentuk Sudut Bibir, Definisi Garis Bibir.
+- "hair": berikan satu string tunggal yang merangkum semua detail rambut berdasarkan panduan berikut: ${hairInstruction}.
+- "skin": berikan deskripsi yang mencakup warna kulit (jika tidak alami, sebutkan sebagai 'dengan make up'). Sebutkan juga tanda khusus seperti tahi lalat atau lesung pipi.
+${vibeInstruction}
+- Untuk kunci lainnya ("demeanor", "facial_hair"), berikan deskripsi yang sesuai.`;
+            
             apiPromises.push(callGeminiAPI(faceInstruction, [characterImageData.face]));
             
             if (characterImageData.clothing) {
-                const clothingInstruction = `Fokus pada pakaian di gambar ini. Deskripsikan secara detail untuk karakter gaya **${selectedStyle}**: jenis pakaian, warna, bahan, pola, dan model potongannya. Balas HANYA dengan frasa deskripsi pakaian ini, tanpa kalimat pembuka.`;
+                let clothingInstruction;
+                if (selectedStyle === 'Fiksi') {
+                    clothingInstruction = `Berdasarkan gambar pakaian, analisis dan kembalikan objek JSON dengan kunci "top" dan "bottom". Pastikan deskripsi mengandung unsur fantasi (contoh: jubah ajaib, armor elf). Balas HANYA dengan objek JSON.`;
+                } else { // Non Fiksi
+                    // [MODIFIED] Changed "kostum" to be more neutral
+                    clothingInstruction = `Berdasarkan gambar pakaian, analisis dan deskripsikan sebagai sebuah "pakaian" atau "busana" dalam objek JSON dengan kunci "top" dan "bottom". Balas HANYA dengan objek JSON.`;
+                }
                 apiPromises.push(callGeminiAPI(clothingInstruction, [characterImageData.clothing]));
             } else {
-                apiPromises.push(Promise.resolve(null));
+                apiPromises.push(Promise.resolve('{}'));
             }
+
             if (characterImageData.accessories) {
-                const accessoriesInstruction = `Fokus pada aksesori di gambar ini (topi, kacamata, perhiasan, dll.). Deskripsikan secara detail untuk karakter gaya **${selectedStyle}**: jenis, bahan, dan warnanya. Jika tidak ada, kembalikan string kosong. Balas HANYA dengan frasa deskripsi aksesori ini, tanpa kalimat pembuka.`;
+                const accessoriesInstruction = `Berdasarkan gambar aksesori, analisis dan kembalikan objek JSON dengan kunci "accessory". Balas HANYA dengan objek JSON. Jika tidak ada aksesori, nilai harus "none".`;
                 apiPromises.push(callGeminiAPI(accessoriesInstruction, [characterImageData.accessories]));
             } else {
-                apiPromises.push(Promise.resolve(null));
+                apiPromises.push(Promise.resolve('{}'));
             }
             
-            const [faceDesc, clothingDesc, accessoriesDesc] = await Promise.all(apiPromises);
+            const [faceResult, clothingResult, accessoriesResult] = await Promise.all(apiPromises);
 
-            let finalDescription = faceDesc || "seseorang";
+            try {
+                const faceData = JSON.parse(faceResult);
+                const clothingData = JSON.parse(clothingResult);
+                const accessoriesData = JSON.parse(accessoriesResult);
 
-            // [FIXED] Added safer checks for clothing and accessories to prevent errors
-            if (clothingDesc && typeof clothingDesc === 'string' && clothingDesc.trim() !== '') {
-                finalDescription += `, mengenakan ${clothingDesc}`;
+                const finalDescription = `// MASTER PROMPT / CHARACTER SHEET: ${characterName} (v2.0)
+(
+    ${characterName.toLowerCase().replace(/ /g, '_')}:
+    identity: ${faceData.identity || 'not specified'}.
+    demeanor: ${faceData.demeanor || 'not specified'}.
+    vibe: ${faceData.vibe || 'not specified'}.
+
+    // --- Physical Appearance ---
+    face_shape: ${faceData.face_shape || 'not specified'}.
+    eyes: ${faceData.eyes || 'not specified'}.
+    nose: ${faceData.nose || 'not specified'}.
+    lips: ${faceData.lips || 'not specified'}.
+    hair: (${faceData.hair || 'not specified'}:1.2).
+    skin: ${faceData.skin || 'not specified'}.
+    facial_hair: (${faceData.facial_hair || 'none'}:1.5).
+
+    // --- Attire & Accessories ---
+    attire:
+        top: ${clothingData.top || 'not specified'}.
+        bottom: ${clothingData.bottom || 'not specified'}.
+    accessory: (${accessoriesData.accessory || 'none'}:1.3).
+)`.trim();
+                
+                inputs.subjek.value = finalDescription;
+                characterCreatorModal.classList.add('hidden');
+
+            } catch(e) {
+                console.error("Gagal mem-parsing JSON dari API. Response:", {faceResult, clothingResult, accessoriesResult}, "Error:", e);
+                throw new Error("Gagal membuat Character Sheet karena respons API tidak valid.");
             }
-            if (accessoriesDesc && typeof accessoriesDesc === 'string' && accessoriesDesc.trim() !== '') {
-                 finalDescription += `, dengan ${accessoriesDesc}`;
-            }
-            
-            inputs.subjek.value = finalDescription;
-            characterCreatorModal.classList.add('hidden');
         });
     }
     
@@ -466,7 +501,13 @@ PENTING: Jika Anda mendeteksi fitur yang tidak realistis (seperti warna rambut a
             return;
         }
 
-        const characterName = prompt("Masukkan nama untuk karakter ini:", "Karakter Baru");
+        let defaultName = "Karakter Baru";
+        const nameMatch = subject.match(/\/\/\s*MASTER PROMPT\s*\/\s*CHARACTER SHEET:\s*(.*?)\s*\(v2.0\)/);
+        if (nameMatch && nameMatch[1]) {
+            defaultName = nameMatch[1].trim();
+        }
+
+        const characterName = prompt("Masukkan nama untuk karakter ini:", defaultName);
         if (!characterName) return; // User cancelled
 
         const characters = getSavedCharacters();
