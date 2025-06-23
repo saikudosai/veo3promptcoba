@@ -1,3 +1,6 @@
+// Prompt Generator - Versi 1.0.0
+// Disimpan pada: Senin, 23 Juni 2025
+
 // Wait for the DOM to be fully loaded before running the script
 document.addEventListener('DOMContentLoaded', () => {
     
@@ -298,22 +301,64 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- MANUAL PROMPT LOGIC ---
     function generateIndonesianPrompt() {
-        let combinedActionExpression = inputs.aksi.value.trim();
+        const subjectValue = inputs.subjek.value.trim();
+        
+        if (subjectValue.includes('// MASTER PROMPT / CHARACTER SHEET')) {
+            const promptParts = [
+                inputs.style.value,
+                inputs.sudutKamera.value,
+                inputs.kamera.value,
+                subjectValue,
+                // [MODIFIED] Add the header for the action and scene details
+                inputs.aksi.value.trim() ? `// --- Action/Scene ---\n${inputs.aksi.value.trim()}` : '',
+                inputs.ekspresi.value.trim() ? `dengan ekspresi ${inputs.ekspresi.value.trim()}` : '',
+                inputs.tempat.value.trim() ? `di ${inputs.tempat.value.trim()}` : '',
+                inputs.waktu.value.trim() ? `saat ${inputs.waktu.value.trim()}`: '',
+                inputs.pencahayaan.value.trim() ? `dengan pencahayaan ${inputs.pencahayaan.value.trim()}`: '',
+                inputs.suasana.value.trim() ? `suasana ${inputs.suasana.value.trim()}`: '',
+                inputs.backsound.value.trim() ? `dengan suara ${inputs.backsound.value.trim()}` : '',
+                inputs.kalimat.value.trim() ? `mengucapkan kalimat: "${inputs.kalimat.value.trim()}"` : '',
+                inputs.detail.value
+            ];
+            // Join with newline for better readability when using a character sheet
+            return promptParts.filter(part => part && part.trim()).join(',\n');
+        }
+
+        // Standard Logic for simple subjects
+        let sceneDescription = `sebuah adegan tentang ${subjectValue || 'seseorang'}`;
+        
+        const action = inputs.aksi.value.trim();
         const expression = inputs.ekspresi.value.trim();
-        if (combinedActionExpression && expression) combinedActionExpression += ` dengan ekspresi ${expression}`;
-        else if (expression) combinedActionExpression = expression;
+        if (action && expression) {
+            sceneDescription += ` yang sedang ${action} dengan ekspresi ${expression}`;
+        } else if (action) {
+            sceneDescription += ` yang sedang ${action}`;
+        } else if (expression) {
+            sceneDescription += ` dengan ekspresi ${expression}`;
+        }
+
         const place = inputs.tempat.value.trim();
+        if (place) {
+            sceneDescription += ` di ${place}`;
+        }
+        
         const time = inputs.waktu.value.trim();
-        let locationAndTime = (place && time) ? `${place} saat ${time}` : (place || time);
+        if (time) {
+            sceneDescription += ` saat ${time}`;
+        }
+        
         const promptParts = [
-            inputs.style.value, inputs.sudutKamera.value, inputs.kamera.value, inputs.subjek.value,
-            combinedActionExpression, locationAndTime,
+            inputs.style.value,
+            inputs.sudutKamera.value,
+            inputs.kamera.value,
+            sceneDescription,
             inputs.pencahayaan.value.trim() ? `dengan pencahayaan ${inputs.pencahayaan.value.trim()}`: '',
             inputs.suasana.value.trim() ? `suasana ${inputs.suasana.value.trim()}`: '',
-            inputs.backsound.value.trim() ? `suara ${inputs.backsound.value.trim()} dalam Bahasa Indonesia` : '',
-            inputs.kalimat.value.trim() ? `kalimat diucapkan dalam Bahasa Indonesia: "${inputs.kalimat.value.trim()}"` : '',
+            inputs.backsound.value.trim() ? `dengan suara ${inputs.backsound.value.trim()}` : '',
+            inputs.kalimat.value.trim() ? `mengucapkan kalimat: "${inputs.kalimat.value.trim()}"` : '',
             inputs.detail.value
         ];
+
         return promptParts.filter(part => part && part.trim()).join(', ');
     }
     
@@ -434,7 +479,6 @@ ${vibeInstruction}
                 if (selectedStyle === 'Fiksi') {
                     clothingInstruction = `Berdasarkan gambar pakaian, analisis dan kembalikan objek JSON dengan kunci "top" dan "bottom". Pastikan deskripsi mengandung unsur fantasi (contoh: jubah ajaib, armor elf). Balas HANYA dengan objek JSON.`;
                 } else { // Non Fiksi
-                    // [MODIFIED] Changed "kostum" to be more neutral
                     clothingInstruction = `Berdasarkan gambar pakaian, analisis dan deskripsikan sebagai sebuah "pakaian" atau "busana" dalam objek JSON dengan kunci "top" dan "bottom". Balas HANYA dengan objek JSON.`;
                 }
                 apiPromises.push(callGeminiAPI(clothingInstruction, [characterImageData.clothing]));
