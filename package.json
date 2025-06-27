@@ -1,12 +1,7 @@
 {
-  "name": "veo3git-prompt-generator",
+  "name": "veo3git-backend",
   "version": "1.0.0",
   "private": true,
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start"
-  },
   "dependencies": {
     "@vercel/postgres": "^0.9.0",
     "bcryptjs": "^2.4.3",
