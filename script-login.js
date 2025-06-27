@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
         registerForm.classList.remove('hidden');
         formTitle.textContent = 'Buat Akun Baru';
         toggleText.innerHTML = 'Sudah punya akun? <a href="#" id="show-login" class="font-medium text-indigo-400 hover:underline">Login</a>';
+        // Add event listener for the new "Login" link
         document.getElementById('show-login').addEventListener('click', (e) => {
             e.preventDefault();
             switchToLogin();
@@ -21,62 +22,81 @@ document.addEventListener('DOMContentLoaded', () => {
         loginForm.classList.remove('hidden');
         formTitle.textContent = 'Masuk untuk melanjutkan';
         toggleText.innerHTML = 'Belum punya akun? <a href="#" id="show-register" class="font-medium text-indigo-400 hover:underline">Daftar sekarang</a>';
-        document.getElementById('show-register').addEventListener('click', (e) => {
-            e.preventDefault();
-            switchToRegister();
-        });
+        // Re-bind the original listener to avoid multiple bindings
+        const newShowRegisterLink = document.getElementById('show-register');
+        if(newShowRegisterLink) {
+            newShowRegisterLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                switchToRegister();
+            });
+        }
     }
-
+    
     document.getElementById('show-register').addEventListener('click', (e) => {
         e.preventDefault();
         switchToRegister();
     });
 
+    // Handle login form submission
     loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const username = document.getElementById('login-username').value;
         const password = document.getElementById('login-password').value;
 
-        const response = await fetch('database.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'login', username, password })
-        });
+        try {
+            const response = await fetch('/api/auth', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'login', username, password })
+            });
 
-        const result = await response.json();
-        
-        messageBox.textContent = result.message;
-        if (result.success) {
-            messageBox.className = 'mt-4 text-center text-sm font-medium text-green-400';
-            window.location.href = 'index.html'; // Redirect to main application page
-        } else {
-            messageBox.className = 'mt-4 text-center text-sm font-medium text-red-400';
+            const result = await response.json();
+            
+            messageBox.textContent = result.message;
+            if (result.success) {
+                messageBox.className = 'mt-4 text-center text-sm font-medium text-green-400';
+                // [MODIFIED] Store the token instead of relying on sessions
+                localStorage.setItem('userAuthToken', result.token);
+                // Redirect to main application page after successful login
+                window.location.href = 'index.html'; // Or your main page
+            } else {
+                messageBox.className = 'mt-4 text-center text-sm font-medium text-red-400';
+            }
+        } catch (error) {
+             messageBox.className = 'mt-4 text-center text-sm font-medium text-red-400';
+             messageBox.textContent = 'Tidak dapat terhubung ke server.';
         }
     });
 
+    // Handle registration form submission
     registerForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const username = document.getElementById('register-username').value;
         const email = document.getElementById('register-email').value;
         const password = document.getElementById('register-password').value;
 
-        const response = await fetch('database.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'register', username, email, password })
-        });
+        try {
+            const response = await fetch('/api/auth', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'register', username, email, password })
+            });
 
-        const result = await response.json();
+            const result = await response.json();
 
-        messageBox.textContent = result.message;
-        if (result.success) {
-            messageBox.className = 'mt-4 text-center text-sm font-medium text-green-400';
-             setTimeout(() => {
-                switchToLogin();
-                messageBox.textContent = ''; // Clear message after switching
-             }, 2000);
-        } else {
+            messageBox.textContent = result.message;
+            if (result.success) {
+                messageBox.className = 'mt-4 text-center text-sm font-medium text-green-400';
+                 setTimeout(() => {
+                    switchToLogin();
+                    messageBox.textContent = ''; // Clear message after switching
+                 }, 2000);
+            } else {
+                messageBox.className = 'mt-4 text-center text-sm font-medium text-red-400';
+            }
+        } catch(error) {
             messageBox.className = 'mt-4 text-center text-sm font-medium text-red-400';
+            messageBox.textContent = 'Tidak dapat terhubung ke server.';
         }
     });
 });

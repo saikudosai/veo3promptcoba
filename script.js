@@ -1,14 +1,19 @@
-// Prompt Generator - Versi 1.7.0 (Sistem Koin Berbasis Database)
+// Prompt Generator - Versi 1.7.0 (JWT Auth & DB Coin System)
 // Disimpan pada: Jumat, 27 Juni 2025
 
 document.addEventListener('DOMContentLoaded', () => {
-    
+
+    // [MODIFIED] Authentication Check at the beginning
+    const token = localStorage.getItem('userAuthToken');
+    if (!token) {
+        window.location.href = 'login.html'; // Redirect if no token
+        return; 
+    }
+
     // --- ELEMENT SELECTORS (Grouped for clarity) ---
 
     // General UI
-    const coinCountEl = document.getElementById('coinCount');
-    const addCoinBtn = document.getElementById('addCoinBtn');
-    const noCoinsNotification = document.getElementById('noCoinsNotification');
+    const userNavContainer = document.getElementById('user-nav-container'); // Container for user info and logout
     
     // Modals and their controls
     const guideBtn = document.getElementById('guideBtn');
@@ -93,8 +98,6 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     
     // --- STATE MANAGEMENT ---
-    let isWaitingForAdReward = false;
-    let adOpenedTime = null;
     let singleUploadedImageData = null; 
     let characterImageData = { face: null, clothing: null, accessories: null };
     let currentSceneMode = 'single';
@@ -102,35 +105,98 @@ document.addEventListener('DOMContentLoaded', () => {
     let dialogueLines = [];
 
 
-    // --- [MODIFIED] COIN SYSTEM (now uses database) ---
+    // --- TOKEN-BASED USER INFO & LOGOUT ---
+    function setupUserNav() {
+        if(!userNavContainer) return;
+        
+        try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            userNavContainer.innerHTML = `
+                <div class="flex items-center space-x-2 bg-gray-800 px-3 py-1.5 rounded-full border border-gray-700 shadow-lg">
+                    <span class="text-yellow-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                          <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+                          <path d="M8 13.5a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11m0 .5A6 6 0 1 0 8 2a6 6 0 0 0 0 12"/>
+                          <path d="M8 11.732a.75.75 0 0 1 .75-.75h.025a.75.75 0 0 1 0 1.5H8.75a.75.75 0 0 1-.75-.75M6.625 5.34a.75.75 0 0 0-1.5 0v1.445a.75.75 0 0 0 1.5 0z"/>
+                          <path d="M9.19 8.28a.75.75 0 0 0-1.06-1.06l-1.445 1.444a.75.75 0 1 0 1.06 1.06z"/>
+                        </svg>
+                    </span>
+                    <span id="coinCount" class="font-semibold text-white">0</span>
+                </div>
+                 <span class="text-white font-semibold hidden sm:block">
+                    Halo, ${payload.username}
+                </span>
+                <a href="#" id="logoutBtn" title="Logout" class="bg-red-600 hover:bg-red-700 text-white font-bold h-8 w-8 rounded-full text-lg transition-colors flex items-center justify-center shadow-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                      <path fill-rule="evenodd" d="M10 12.5a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v2a.5.5 0 0 0 1 0v-2A1.5 1.5 0 0 0 9.5 2h-8A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-2a.5.5 0 0 0-1 0z"/>
+                      <path fill-rule="evenodd" d="M15.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L14.293 7.5H5.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708z"/>
+                    </svg>
+                 </a>
+            `;
+            document.getElementById('logoutBtn').addEventListener('click', (e) => {
+                e.preventDefault();
+                localStorage.removeItem('userAuthToken');
+                window.location.href = 'login.html';
+            });
+        } catch (error) {
+            console.error("Invalid token, redirecting to login.");
+            localStorage.removeItem('userAuthToken');
+            window.location.href = 'login.html';
+        }
+    }
+
+
+    // --- COIN SYSTEM (now uses database via token) ---
     function updateCoinDisplay(count) {
+        const coinCountEl = document.getElementById('coinCount');
         if (coinCountEl) {
             coinCountEl.textContent = count;
         }
         updateButtonState(count);
     }
     
+    async function callAuthenticatedApi(action, payload = {}) {
+        const token = localStorage.getItem('userAuthToken');
+        if (!token) {
+            window.location.href = 'login.html';
+            throw new Error("Token tidak ditemukan.");
+        }
+
+        const response = await fetch('/api/auth', {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}` // Send the token
+            },
+            body: JSON.stringify({ action, ...payload })
+        });
+        
+        if (response.status === 401) { // Unauthorized (e.g., token expired)
+            localStorage.removeItem('userAuthToken');
+            window.location.href = 'login.html';
+            throw new Error("Sesi tidak valid, silakan login kembali.");
+        }
+
+        const result = await response.json();
+        if (!result.success) {
+            throw new Error(result.message || 'Terjadi kesalahan pada server.');
+        }
+        return result;
+    }
+
     async function loadCoins() {
         try {
-            const response = await fetch('database.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'get_coins' })
-            });
-            const result = await response.json();
-            if (result.success) {
-                updateCoinDisplay(result.coins);
-            } else {
-                console.error('Gagal memuat koin:', result.message);
-                if(result.message.includes("login")) window.location.href = 'login.html';
-            }
+            const result = await callAuthenticatedApi('get_coins');
+            updateCoinDisplay(result.coins);
         } catch (error) {
-            console.error('Error saat memuat koin:', error);
+            console.error('Gagal memuat koin:', error.message);
+            if(error.message.includes("login") || error.message.includes("Sesi")) {
+                window.location.href = 'login.html';
+            }
         }
     }
 
     function updateButtonState(currentCoins) {
-        // Disabled status is now handled by handleApiInteraction, this just updates text
         if (generateBtn.disabled) return;
         const canGenerate = currentCoins >= 1;
         const canCreateCharacter = currentCoins >= 3;
@@ -145,56 +211,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     }
-
-    function handleAddCoinClick() {
-        if (isWaitingForAdReward) return;
-        
-        isWaitingForAdReward = true;
-        adOpenedTime = Date.now();
-        noCoinsNotification.classList.add('hidden');
-        
-        addCoinBtn.disabled = true;
-        addCoinBtn.title = 'Tunggu 5 detik di tab baru, lalu kembali untuk mendapatkan koin';
-        addCoinBtn.textContent = '...';
-
-        window.open('https://shopee.co.id/-PROMO-MURAH-Celana-Cargo-Panjang-Pria-Dewasa-Bahan-Adem-Tidak-Panas-Nyaman-Untuk-Sehari-Bekerja-i.102427008.29765835450', '_blank');
-    }
-
-    async function handleWindowFocus() {
-        if (isWaitingForAdReward && adOpenedTime) {
-            const timeElapsed = Date.now() - adOpenedTime;
-            const requiredTime = 5000;
-
-            isWaitingForAdReward = false;
-            adOpenedTime = null;
-            
-            addCoinBtn.disabled = false;
-            addCoinBtn.title = 'Tambah 5 Koin';
-            addCoinBtn.textContent = '+';
-
-            if (timeElapsed >= requiredTime) {
-                try {
-                    const response = await fetch('database.php', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ action: 'add_coins' })
-                    });
-                    const result = await response.json();
-                    if(result.success) {
-                        updateCoinDisplay(result.new_coins);
-                        const coinContainer = coinCountEl.parentElement;
-                        coinContainer.classList.add('bg-green-600', 'transition-colors', 'duration-300');
-                        setTimeout(() => coinContainer.classList.remove('bg-green-600'), 1500);
-                    } else {
-                        alert(result.message);
-                    }
-                } catch (error) {
-                    alert('Gagal menghubungi server untuk menambah koin.');
-                }
-            }
-        }
-    }
-
+    
     // --- UI & UTILITY FUNCTIONS ---
     function showCopyFeedback(button, text = 'Berhasil Disalin!') {
         const originalText = button.textContent;
@@ -310,7 +327,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- ACTION HANDLERS ---
     function setActionsDisabled(disabled) {
-        // This function is now simpler as button text is handled in handleApiInteraction
         generateBtn.disabled = disabled;
         describeSubjectBtn.disabled = disabled;
         describePlaceBtn.disabled = disabled;
@@ -318,39 +334,30 @@ document.addEventListener('DOMContentLoaded', () => {
         saveCharacterBtn.disabled = disabled;
         loadCharacterBtn.disabled = disabled;
 
-        if(!disabled) { // Re-enable based on logic
+        if(!disabled) { 
             describeSubjectBtn.disabled = !singleUploadedImageData;
             describePlaceBtn.disabled = !singleUploadedImageData;
-            loadCoins(); // This will re-evaluate button states
+            loadCoins(); 
         }
     }
 
     async function handleApiInteraction(button, cost, apiFunction) {
         const originalButtonText = button.textContent;
         setActionsDisabled(true);
-        button.textContent = 'Memvalidasi koin...';
         
         try {
-            const useCoinResponse = await fetch('database.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'use_coin', cost: cost })
-            });
-
-            const useCoinResult = await useCoinResponse.json();
-
-            if (!useCoinResult.success) {
-                throw new Error(useCoinResult.message || 'Koin tidak cukup.');
-            }
+            button.textContent = 'Memvalidasi koin...';
+            await callAuthenticatedApi('use_coin', { cost });
 
             button.textContent = 'Memproses...';
             await apiFunction();
+            
             await loadCoins();
-
+            
         } catch (error) {
             console.error("Interaction Error:", error);
             alert(`Terjadi kesalahan: ${error.message}`);
-            await loadCoins(); // Sync coin count on error
+            await loadCoins();
         } finally {
             setActionsDisabled(false);
             button.textContent = originalButtonText;
@@ -843,28 +850,33 @@ ${vibeInstruction}
     }
 
     // --- EVENT LISTENERS INITIALIZATION ---
-    loadCoins();
-    addCoinBtn.addEventListener('click', handleAddCoinClick);
-    window.addEventListener('focus', handleWindowFocus);
-    generateBtn.addEventListener('click', createAndTranslatePrompt);
+    setupUserNav(); 
+    loadCoins();    
+
     copyBtnId.addEventListener('click', () => copyText(promptIndonesia, copyBtnId));
     copyBtnEn.addEventListener('click', () => copyText(promptEnglish, copyBtnEn));
     openGeminiIdBtn.addEventListener('click', () => openInGemini(promptIndonesia, openGeminiIdBtn));
     openGeminiEnBtn.addEventListener('click', () => openInGemini(promptEnglish, openGeminiEnBtn));
     
-    // --- Scene Mode Listeners ---
     singleSceneBtn.addEventListener('click', () => switchSceneMode('single'));
     conversationSceneBtn.addEventListener('click', () => switchSceneMode('conversation'));
     addSceneCharacterBtn.addEventListener('click', () => populateCharacterModal('conversation'));
     addDialogueLineBtn.addEventListener('click', addDialogueLine);
 
-
-    // Listeners for single image description
     imageUploadInput.addEventListener('change', handleSingleImageUpload);
-    describeSubjectBtn.addEventListener('click', () => describeSingleImage('subject'));
-    describePlaceBtn.addEventListener('click', () => describeSingleImage('place'));
+    describeSubjectBtn.addEventListener('click', () => {
+        handleApiInteraction(describeSubjectBtn, 1, () => describeSingleImage('subject'));
+    });
+    describePlaceBtn.addEventListener('click', () => {
+        handleApiInteraction(describePlaceBtn, 1, () => describeSingleImage('place'));
+    });
+    
+    generateBtn.addEventListener('click', () => {
+        handleApiInteraction(generateBtn, 1, createAndTranslatePrompt);
+    });
+    
+    createCharacterBtn.addEventListener('click', createCharacterDescription);
 
-    // Modal Listeners
     guideBtn.addEventListener('click', () => guideModal.classList.remove('hidden'));
     closeGuideBtn.addEventListener('click', () => guideModal.classList.add('hidden'));
     guideModal.addEventListener('click', (e) => { if(e.target === guideModal) guideModal.classList.add('hidden'); });
@@ -873,14 +885,11 @@ ${vibeInstruction}
     closeCharacterCreatorBtn.addEventListener('click', () => characterCreatorModal.classList.add('hidden'));
     characterCreatorModal.addEventListener('click', (e) => { if(e.target === characterCreatorModal) characterCreatorModal.classList.add('hidden'); });
     
-    // Character Sheet Listeners
     saveCharacterBtn.addEventListener('click', saveCharacter);
     loadCharacterBtn.addEventListener('click', () => populateCharacterModal('single'));
     closeLoadCharacterBtn.addEventListener('click', () => loadCharacterModal.classList.add('hidden'));
     loadCharacterModal.addEventListener('click', (e) => { if (e.target === loadCharacterModal) loadCharacterModal.classList.add('hidden') });
 
-    // Listeners for uploads inside the character creator modal
-    createCharacterBtn.addEventListener('click', createCharacterDescription);
     Object.keys(characterUploads).forEach(type => {
         const { input, container } = characterUploads[type];
         input.addEventListener('change', (e) => handleCharacterImageUpload(e, type));
@@ -897,7 +906,6 @@ ${vibeInstruction}
         });
     });
 
-    // Drag and Drop for the original single image upload
     imageUploadContainer.addEventListener('dragover', (e) => { e.preventDefault(); imageUploadContainer.parentElement.classList.add('border-indigo-500'); });
     imageUploadContainer.addEventListener('dragleave', (e) => { e.preventDefault(); imageUploadContainer.parentElement.classList.remove('border-indigo-500'); });
     imageUploadContainer.addEventListener('drop', (e) => {
