@@ -1,7 +1,6 @@
-// Prompt Generator - Versi 1.5.1 (Detailed Clothing)
+// Prompt Generator - Versi 1.7.0 (Sistem Koin Berbasis Database)
 // Disimpan pada: Jumat, 27 Juni 2025
 
-// Wait for the DOM to be fully loaded before running the script
 document.addEventListener('DOMContentLoaded', () => {
     
     // --- ELEMENT SELECTORS (Grouped for clarity) ---
@@ -47,7 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
         backsound: document.getElementById('backsound'),
         kalimat: document.getElementById('kalimat'),
         detail: document.getElementById('detail'),
-        sceneInteraction: document.getElementById('sceneInteraction') 
+        sceneInteraction: document.getElementById('sceneInteraction')
     };
     const generateBtn = document.getElementById('generateBtn');
     const saveCharacterBtn = document.getElementById('saveCharacterBtn');
@@ -94,7 +93,6 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     
     // --- STATE MANAGEMENT ---
-    let coins = 0;
     let isWaitingForAdReward = false;
     let adOpenedTime = null;
     let singleUploadedImageData = null; 
@@ -104,35 +102,48 @@ document.addEventListener('DOMContentLoaded', () => {
     let dialogueLines = [];
 
 
-    // --- COIN SYSTEM ---
-    function saveCoins() {
-        localStorage.setItem('userVeoCoins', coins);
+    // --- [MODIFIED] COIN SYSTEM (now uses database) ---
+    function updateCoinDisplay(count) {
+        if (coinCountEl) {
+            coinCountEl.textContent = count;
+        }
+        updateButtonState(count);
     }
-
-    function updateButtonState() {
-        if (generateBtn.disabled) return;
-        generateBtn.textContent = (coins < 1) ? 'Koin Habis' : 'Generate Prompt';
-        if (createCharacterBtn) {
-            if (coins < 3) {
-                 createCharacterBtn.textContent = 'Koin Kurang (Butuh 3)';
-                 createCharacterBtn.disabled = true;
+    
+    async function loadCoins() {
+        try {
+            const response = await fetch('database.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'get_coins' })
+            });
+            const result = await response.json();
+            if (result.success) {
+                updateCoinDisplay(result.coins);
             } else {
-                 createCharacterBtn.textContent = 'Buat Karakter & Isi Subjek';
-                 createCharacterBtn.disabled = !characterImageData.face;
+                console.error('Gagal memuat koin:', result.message);
+                if(result.message.includes("login")) window.location.href = 'login.html';
             }
+        } catch (error) {
+            console.error('Error saat memuat koin:', error);
         }
     }
 
-    function updateCoinDisplay() {
-        coinCountEl.textContent = coins;
-        updateButtonState();
-    }
+    function updateButtonState(currentCoins) {
+        // Disabled status is now handled by handleApiInteraction, this just updates text
+        if (generateBtn.disabled) return;
+        const canGenerate = currentCoins >= 1;
+        const canCreateCharacter = currentCoins >= 3;
 
-    function loadCoins() {
-        const savedCoins = localStorage.getItem('userVeoCoins');
-        coins = (savedCoins === null) ? 5 : parseInt(savedCoins, 10);
-        saveCoins();
-        updateCoinDisplay();
+        generateBtn.textContent = canGenerate ? 'Generate Prompt' : 'Koin Habis';
+        
+        if (createCharacterBtn) {
+            if (!canCreateCharacter) {
+                 createCharacterBtn.textContent = 'Koin Kurang (Butuh 3)';
+            } else {
+                 createCharacterBtn.textContent = 'Buat Karakter & Isi Subjek';
+            }
+        }
     }
 
     function handleAddCoinClick() {
@@ -149,7 +160,7 @@ document.addEventListener('DOMContentLoaded', () => {
         window.open('https://shopee.co.id/-PROMO-MURAH-Celana-Cargo-Panjang-Pria-Dewasa-Bahan-Adem-Tidak-Panas-Nyaman-Untuk-Sehari-Bekerja-i.102427008.29765835450', '_blank');
     }
 
-    function handleWindowFocus() {
+    async function handleWindowFocus() {
         if (isWaitingForAdReward && adOpenedTime) {
             const timeElapsed = Date.now() - adOpenedTime;
             const requiredTime = 5000;
@@ -162,13 +173,24 @@ document.addEventListener('DOMContentLoaded', () => {
             addCoinBtn.textContent = '+';
 
             if (timeElapsed >= requiredTime) {
-                coins += 5;
-                saveCoins();
-                updateCoinDisplay();
-
-                const coinContainer = coinCountEl.parentElement;
-                coinContainer.classList.add('bg-green-600', 'transition-colors', 'duration-300');
-                setTimeout(() => coinContainer.classList.remove('bg-green-600'), 1500);
+                try {
+                    const response = await fetch('database.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ action: 'add_coins' })
+                    });
+                    const result = await response.json();
+                    if(result.success) {
+                        updateCoinDisplay(result.new_coins);
+                        const coinContainer = coinCountEl.parentElement;
+                        coinContainer.classList.add('bg-green-600', 'transition-colors', 'duration-300');
+                        setTimeout(() => coinContainer.classList.remove('bg-green-600'), 1500);
+                    } else {
+                        alert(result.message);
+                    }
+                } catch (error) {
+                    alert('Gagal menghubungi server untuk menambah koin.');
+                }
             }
         }
     }
@@ -287,37 +309,48 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- ACTION HANDLERS ---
-    const allActionButtons = [generateBtn, describeSubjectBtn, describePlaceBtn, createCharacterBtn, saveCharacterBtn, loadCharacterBtn];
     function setActionsDisabled(disabled) {
-        allActionButtons.forEach(btn => { if(btn) btn.disabled = disabled; });
-        if (!disabled) {
-            if(describeSubjectBtn) describeSubjectBtn.disabled = !singleUploadedImageData;
-            if(describePlaceBtn) describePlaceBtn.disabled = !singleUploadedImageData;
-            if (createCharacterBtn) createCharacterBtn.disabled = !characterImageData.face;
-            updateButtonState();
+        // This function is now simpler as button text is handled in handleApiInteraction
+        generateBtn.disabled = disabled;
+        describeSubjectBtn.disabled = disabled;
+        describePlaceBtn.disabled = disabled;
+        createCharacterBtn.disabled = disabled;
+        saveCharacterBtn.disabled = disabled;
+        loadCharacterBtn.disabled = disabled;
+
+        if(!disabled) { // Re-enable based on logic
+            describeSubjectBtn.disabled = !singleUploadedImageData;
+            describePlaceBtn.disabled = !singleUploadedImageData;
+            loadCoins(); // This will re-evaluate button states
         }
     }
 
     async function handleApiInteraction(button, cost, apiFunction) {
-        if (coins < cost) {
-            noCoinsNotification.classList.remove('hidden');
-            setTimeout(() => noCoinsNotification.classList.add('hidden'), 3000);
-            return;
-        }
         const originalButtonText = button.textContent;
         setActionsDisabled(true);
-        button.textContent = 'Memproses...';
-        coins -= cost;
-        saveCoins();
-        updateCoinDisplay();
+        button.textContent = 'Memvalidasi koin...';
+        
         try {
+            const useCoinResponse = await fetch('database.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'use_coin', cost: cost })
+            });
+
+            const useCoinResult = await useCoinResponse.json();
+
+            if (!useCoinResult.success) {
+                throw new Error(useCoinResult.message || 'Koin tidak cukup.');
+            }
+
+            button.textContent = 'Memproses...';
             await apiFunction();
+            await loadCoins();
+
         } catch (error) {
-            console.error("API Interaction Error:", error);
-            alert(`Terjadi kesalahan saat memproses permintaan. Detail: ${error.message}`);
-            coins += cost; // Refund coins on failure
-            saveCoins();
-            updateCoinDisplay();
+            console.error("Interaction Error:", error);
+            alert(`Terjadi kesalahan: ${error.message}`);
+            await loadCoins(); // Sync coin count on error
         } finally {
             setActionsDisabled(false);
             button.textContent = originalButtonText;
@@ -496,7 +529,6 @@ document.addEventListener('DOMContentLoaded', () => {
         reader.readAsDataURL(file);
     }
     
-    // [MODIFIED] Using a single, optimized API call.
     function createCharacterDescription() {
         if (!characterImageData.face) {
             alert("Silakan unggah foto Wajah terlebih dahulu di dalam pop-up.");
@@ -506,11 +538,7 @@ document.addEventListener('DOMContentLoaded', () => {
         handleApiInteraction(createCharacterBtn, 3, async () => {
             const characterName = prompt("Masukkan nama untuk karakter ini:", "Karakter Baru");
             if (!characterName) {
-                coins += 3;
-                saveCoins();
-                updateCoinDisplay();
-                console.log("Pembuatan karakter dibatalkan.");
-                return;
+                throw new Error("Pembuatan karakter dibatalkan.");
             }
 
             const selectedStyle = characterStyleSelect.value;
