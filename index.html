@@ -3,394 +3,384 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prompt Generator</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Walimatul Khitan - Abizhar Atha Munandar</title>
+    
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Great+Vibes&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
     
-    <link rel="stylesheet" href="style.css">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- AOS Animation Library -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        gold: '#D4AF37',
+                        darkbrown: '#2C1810',
+                        cream: '#F5F5DC',
+                        accent: '#8B4513'
+                    },
+                    fontFamily: {
+                        jawa: ['"Cinzel Decorative"', 'cursive'],
+                        script: ['"Great Vibes"', 'cursive'],
+                        body: ['"Lato"', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            overflow-x: hidden;
+            background-color: #2C1810;
+            color: #F5F5DC;
+            margin: 0;
+            padding: 0;
+        }
+        
+        /* BACKGROUND SETTINGS */
+        .custom-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -10;
+            background-image: url('https://raw.githubusercontent.com/saikudosai/veo3promptcoba/image/Bg1.jpg'); 
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+        }
+
+        .custom-bg::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(44, 24, 16, 0.85);
+            z-index: -5;
+        }
+
+        /* Animations */
+        .spin-slow { animation: spin 4s linear infinite; }
+        
+        /* Rotasi Sangat Pelan untuk Ornamen Utama */
+        .spin-very-slow { animation: spin 20s linear infinite; }
+        
+        @keyframes spin { from {transform: rotate(0deg);} to {transform: rotate(360deg);} }
+
+        #cover-page { 
+            transition: transform 1s ease-in-out, opacity 0.8s ease-out;
+            z-index: 50; 
+        }
+        .cover-hidden { 
+            transform: translateY(-100%); 
+            opacity: 0; 
+            pointer-events: none; 
+        }
+        
+        .countdown-box {
+            background: rgba(44, 24, 16, 0.6);
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+        }
+
+        .btn-open {
+            z-index: 60;
+            cursor: pointer;
+        }
+    </style>
 </head>
-<body class="text-gray-200">
+<body class="font-body antialiased">
 
-    <header class="bg-gray-900/50 border-b border-gray-700/50 backdrop-blur-sm sticky top-0 z-20">
-        <div class="container mx-auto max-w-5xl flex items-center justify-between p-4 relative">
-             <div class="text-left">
-                 <h1 class="text-xl font-bold text-white">Prompt Generator</h1>
-                 <p class="text-sm text-gray-400 hidden sm:block">Buat prompt video sinematik dalam Bahasa Indonesia dan Inggris.</p>
-             </div>
-             <!-- [MODIFIED] This container will be populated by script.js with user info and logout button -->
-             <div id="user-nav-container" class="flex items-center space-x-3">
-                <!-- Fallback content while JS is loading -->
-                 <div class="flex items-center space-x-2 bg-gray-800 px-3 py-1.5 rounded-full border border-gray-700 shadow-lg">
-                    <span class="text-yellow-400">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                          <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
-                          <path d="M8 13.5a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11m0 .5A6 6 0 1 0 8 2a6 6 0 0 0 0 12"/>
-                          <path d="M8 11.732a.75.75 0 0 1 .75-.75h.025a.75.75 0 0 1 0 1.5H8.75a.75.75 0 0 1-.75-.75M6.625 5.34a.75.75 0 0 0-1.5 0v1.445a.75.75 0 0 0 1.5 0z"/>
-                          <path d="M9.19 8.28a.75.75 0 0 0-1.06-1.06l-1.445 1.444a.75.75 0 1 0 1.06 1.06z"/>
-                        </svg>
-                    </span>
-                    <span id="coinCount" class="font-semibold text-white">-</span>
-                </div>
-             </div>
+    <!-- Background Image Container -->
+    <div class="custom-bg" id="bg-container"></div>
+
+    <!-- Audio Player -->
+    <audio id="bg-music" loop preload="auto">
+        <source src="https://cdn.pixabay.com/download/audio/2022/03/24/audio_c8c8a73467.mp3?filename=gamelan-java-14446.mp3" type="audio/mpeg">
+    </audio>
+
+    <!-- Music Control Button -->
+    <button id="music-btn" class="fixed bottom-6 right-6 z-[100] bg-gold/80 text-darkbrown p-3 rounded-full shadow-lg border-2 border-cream hidden hover:bg-gold transition-all cursor-pointer" onclick="toggleMusic()">
+        <i class="fas fa-compact-disc text-xl spin-slow" id="music-icon"></i>
+    </button>
+
+    <!-- COVER PAGE -->
+    <div id="cover-page" class="fixed inset-0 flex flex-col justify-center items-center text-center p-6 h-screen w-full bg-darkbrown/95">
+        
+        <!-- DEKORASI BARU (BERPUTAR PELAN) -->
+        <!-- Ukuran disesuaikan (w-64) agar pas dan proporsional -->
+        <div class="mb-8 w-64 h-64 flex items-center justify-center">
+            <img src="https://github.com/saikudosai/veo3promptcoba/blob/image/Bg3-removebg-preview.png?raw=true" 
+                 alt="Ornamen Adat" 
+                 class="w-full h-full object-contain spin-very-slow drop-shadow-xl">
         </div>
-    </header>
 
-    <main class="container mx-auto max-w-5xl p-4 sm:p-6 lg:p-8">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div class="space-y-5 bg-gray-800/50 p-6 rounded-xl border border-gray-700">
+        <h3 class="text-gold font-jawa text-lg mb-2 tracking-widest">Undangan Walimatul Khitan</h3>
+        <h1 class="text-5xl md:text-7xl font-script text-cream mb-6 drop-shadow-lg">Abizhar Atha</h1>
+        
+        <div class="mb-8 text-sm text-gray-300">
+            <p>Putra Bpk. Suhendar Aris Munandar & Ibu Sartini</p>
+        </div>
+
+        <!-- TOMBOL BUKA -->
+        <button onclick="bukaUndangan()" class="btn-open group relative px-8 py-3 bg-transparent border-2 border-gold text-gold font-bold uppercase tracking-wider hover:bg-gold hover:text-darkbrown transition-all duration-300 rounded-full overflow-hidden shadow-lg">
+            <span class="relative z-10 flex items-center gap-2">
+                <i class="fas fa-envelope-open-text"></i> Buka Undangan
+            </span>
+        </button>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <main id="main-content" class="relative overflow-hidden hidden opacity-0 transition-opacity duration-1000 pb-20">
+        
+        <!-- Hero Section -->
+        <section class="min-h-screen flex flex-col justify-center items-center text-center p-6 relative">
+            <div data-aos="fade-down" class="p-8 border-ornament max-w-2xl bg-darkbrown/80 shadow-2xl backdrop-blur-sm rounded-lg border border-gold/30 mt-12">
+                <p class="text-gold font-jawa mb-4 text-sm md:text-base">Assalamu’alaikum Warahmatullahi Wabarakatuh</p>
+                <p class="mb-6 leading-relaxed text-sm md:text-base italic">
+                    "Alhamdulillah, wa syukurillah atas limpahan rahmat, taufik, hidayah, inayah, dan rida Allah SWT. Kami sekeluarga bermaksud menyelenggarakan acara Walimatul Khitan putra kami."
+                </p>
+
+                <div class="my-8 relative">
+                    <!-- FOTO ANAK -->
+                    <div class="w-48 h-48 mx-auto rounded-full border-4 border-gold p-1 shadow-xl overflow-hidden bg-gray-800 relative z-10">
+                        <img src="https://raw.githubusercontent.com/saikudosai/veo3promptcoba/image/Abizhar.jpg" 
+                             onerror="this.onerror=null; this.src='https://img.freepik.com/free-vector/cute-muslim-boy-cartoon-character_1308-112028.jpg'"
+                             alt="Abizhar Atha" class="w-full h-full object-cover hover:scale-110 transition-transform duration-500">
+                    </div>
+                    
+                    <div class="absolute -bottom-4 left-1/2 transform -translate-x-1/2 bg-gold text-darkbrown px-4 py-1 rounded-full text-xs font-bold uppercase tracking-widest z-20 shadow-lg whitespace-nowrap">
+                        Putra Tercinta
+                    </div>
+                </div>
+
+                <h2 class="text-4xl md:text-6xl font-script text-gold mb-2" data-aos="zoom-in">Abizhar Atha</h2>
+                <h3 class="text-2xl md:text-4xl font-script text-gold mb-6" data-aos="zoom-in" data-aos-delay="200">Munandar</h3>
                 
-                <div class="space-y-4">
-                    <label class="block text-lg font-semibold text-white">Fitur AI</label>
-                    <button id="openCharacterCreatorBtn" class="w-full text-white bg-green-600 hover:bg-green-700 focus:ring-4 focus:outline-none focus:ring-green-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center transition-colors duration-300">
-                        Buat Karakter Custom...
-                    </button>
-                    <div>
-                        <label class="block mb-2 text-sm font-medium text-gray-300">Deskripsikan dari Gambar (1 Koin)</label>
-                        <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-600 border-dashed rounded-md">
-                            <div id="imageUploadContainer" class="space-y-1 text-center">
-                                 <img id="imagePreview" src="" class="hidden max-h-40 mx-auto mb-4 rounded"/>
-                                <svg id="imageUploadIcon" class="mx-auto h-12 w-12 text-gray-500" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
-                                    <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 4v.01M28 8l-6-6-6 6M28 8v12a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32 4l-6-6-6 6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                                </svg>
-                                <div class="flex text-sm text-gray-400">
-                                    <label for="imageUploadInput" class="relative cursor-pointer bg-gray-700 rounded-md font-medium text-indigo-400 hover:text-indigo-300 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-offset-gray-900 focus-within:ring-indigo-500 px-1">
-                                        <span>Unggah file</span>
-                                        <input id="imageUploadInput" name="imageUploadInput" type="file" class="sr-only" accept="image/*">
-                                    </label>
-                                    <p class="pl-1">atau tarik dan lepas</p>
-                                </div>
-                                <p class="text-xs text-gray-500">PNG, JPG, GIF hingga 10MB</p>
-                            </div>
-                        </div>
-                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
-                             <button id="describeSubjectBtn" class="w-full text-white bg-pink-600 hover:bg-pink-700 focus:ring-4 focus:outline-none focus:ring-pink-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center transition-colors duration-300" disabled>
-                                Deskripsikan Subjek
-                            </button>
-                             <button id="describePlaceBtn" class="w-full text-white bg-cyan-600 hover:bg-cyan-700 focus:ring-4 focus:outline-none focus:ring-cyan-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center transition-colors duration-300" disabled>
-                                Deskripsikan Tempat
-                            </button>
-                         </div>
-                    </div>
-                </div>
-                
-                <hr class="border-gray-700"/>
-
-                <div>
-                    <label class="block text-lg font-semibold text-white mb-3">Mode Adegan</label>
-                    <div class="flex space-x-2">
-                        <button id="singleSceneBtn" class="flex-1 text-white bg-indigo-600 hover:bg-indigo-700 font-medium rounded-lg text-sm px-5 py-2.5 text-center transition-colors duration-300">
-                            Adegan Tunggal
-                        </button>
-                        <button id="conversationSceneBtn" class="flex-1 text-white bg-gray-600 hover:bg-gray-700 font-medium rounded-lg text-sm px-5 py-2.5 text-center transition-colors duration-300">
-                            Adegan Percakapan
-                        </button>
-                    </div>
-                </div>
-
-                <div id="singleSceneModeContainer" class="space-y-4">
-                    <h2 class="text-lg font-semibold text-white -mb-2">Isi Manual</h2>
-                    <div>
-                        <label for="subjek" class="block mb-2 text-sm font-medium text-gray-300">Subjek (Siapa/Apa)</label>
-                        <input type="text" id="subjek" class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-full p-2.5" placeholder="Contoh: Seekor rubah oranye yang cerdas">
-                        <div class="flex space-x-2 mt-2">
-                            <button id="saveCharacterBtn" class="flex-1 text-white bg-purple-600 hover:bg-purple-700 focus:ring-4 focus:outline-none focus:ring-purple-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center transition-colors duration-300">
-                                Simpan Karakter
-                            </button>
-                            <button id="loadCharacterBtn" class="flex-1 text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center transition-colors duration-300">
-                                Muat Karakter
-                            </button>
-                        </div>
-                    </div>
-
-                    <div>
-                        <label for="aksi" class="block mb-2 text-sm font-medium text-gray-300">Aksi (Apa yang terjadi)</label>
-                        <input type="text" id="aksi" class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-full p-2.5" placeholder="Contoh: membaca buku di bawah pohon">
-                    </div>
-
-                    <div>
-                        <label for="ekspresi" class="block mb-2 text-sm font-medium text-gray-300">Ekspresi (Emosi)</label>
-                        <input type="text" id="ekspresi" class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-full p-2.5" placeholder="Contoh: puas dan tersenyum">
-                    </div>
-                </div>
-                
-                <div id="conversationSceneModeContainer" class="hidden space-y-4">
-                     <div>
-                        <label class="block text-lg font-semibold text-white">Karakter dalam Adegan</label>
-                        <div id="sceneCharactersList" class="mt-2 space-y-2">
-                            <p class="text-sm text-gray-400">Belum ada karakter yang ditambahkan.</p>
-                        </div>
-                        <button id="addSceneCharacterBtn" class="mt-3 w-full text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center transition-colors duration-300">
-                            + Tambah Karakter dari Daftar
-                        </button>
-                    </div>
-
-                    <div>
-                        <label for="sceneInteraction" class="block text-lg font-semibold text-white">Interaksi Adegan</label>
-                        <input type="text" id="sceneInteraction" class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-full p-2.5" placeholder="Contoh: saling berhadapan, berjalan santai, berpegangan tangan">
-                    </div>
-
-                    <hr class="border-gray-700"/>
-
-                    <div>
-                        <label class="block text-lg font-semibold text-white">Editor Dialog</label>
-                        <div id="dialogueEditor" class="mt-2 space-y-3">
-                        </div>
-                        <button id="addDialogueLineBtn" class="mt-3 w-full text-white bg-teal-600 hover:bg-teal-700 focus:ring-4 focus:outline-none focus:ring-teal-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center transition-colors duration-300">
-                            + Tambah Baris Dialog
-                        </button>
-                    </div>
-                </div>
-                
-                <hr class="border-gray-700"/>
-                <h2 class="text-lg font-semibold text-white -mb-2">Detail Adegan</h2>
-
-                <div>
-                    <label for="tempat" class="block mb-2 text-sm font-medium text-gray-300">Tempat (Latar Belakang)</label>
-                    <input type="text" id="tempat" class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-full p-2.5" placeholder="Contoh: di hutan lebat">
-                </div>
-
-                 <div>
-                    <label for="waktu" class="block mb-2 text-sm font-medium text-gray-300">Waktu</label>
-                    <select id="waktu" class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-full p-2.5">
-                        <option selected value="">Pilih waktu...</option>
-                        <option value="pagi hari">Pagi Hari</option>
-                        <option value="siang hari">Siang Hari</option>
-                        <option value="sore hari">Sore Hari</option>
-                        <option value="senja (golden hour)">Senja (Golden Hour)</option>
-                        <option value="blue hour">Blue Hour</option>
-                        <option value="malam hari">Malam Hari</option>
-                        <option value="tengah malam">Tengah Malam</option>
-                        <option value="dini hari">Dini Hari</option>
-                    </select>
-                </div>
-
-                <div>
-                    <label for="sudutKamera" class="block mb-2 text-sm font-medium text-gray-300">Sudut Kamera</label>
-                    <select id="sudutKamera" class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-full p-2.5">
-                        <option selected value="">Pilih sudut kamera...</option>
-                        <option value="close-up shot">Close-Up Shot</option>
-                        <option value="medium shot">Medium Shot</option>
-                        <option value="long shot">Long Shot</option>
-                        <option value="eye-level shot">Eye-Level Shot</option>
-                        <option value="high-angle shot">High-Angle Shot</option>
-                        <option value="low-angle shot">Low-Angle Shot</option>
-                        <option value="bird's-eye view">Bird's-Eye View</option>
-                        <option value="worm's-eye view">Worm's-Eye View</option>
-                        <option value="dutch angle">Dutch Angle</option>
-                        <option value="over-the-shoulder shot">Over-the-Shoulder Shot</option>
-                    </select>
-                </div>
-
-                <div>
-                    <label for="kamera" class="block mb-2 text-sm font-medium text-gray-300">Gerakan Kamera</label>
-                    <select id="kamera" class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-full p-2.5">
-                        <option selected value="">Pilih gerakan kamera...</option>
-                        <option value="Static shot">Static Shot</option>
-                        <option value="Pan">Pan</option>
-                        <option value="Tilt">Tilt</option>
-                        <option value="Dolly shot">Dolly Shot</option>
-                        <option value="Tracking shot">Tracking Shot</option>
-                        <option value="Handheld">Handheld</option>
-                        <option value="Steadicam">Steadicam</option>
-                        <option value="Crane shot">Crane Shot</option>
-                        <option value="Aerial shot">Aerial/Drone Shot</option>
-                        <option value="Dolly zoom">Dolly Zoom (Vertigo Effect)</option>
-                    </select>
-                </div>
-                
-                <div>
-                    <label for="pencahayaan" class="block mb-2 text-sm font-medium text-gray-300">Pencahayaan</label>
-                    <select id="pencahayaan" class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-full p-2.5">
-                        <option selected value="">Pilih pencahayaan...</option>
-                        <option value="cahaya alami">Cahaya Alami</option>
-                        <option value="pencahayaan tiga titik">Pencahayaan Tiga Titik</option>
-                        <option value="high-key lighting">High-Key Lighting</option>
-                        <option value="low-key lighting">Low-Key Lighting</option>
-                        <option value="backlight (cahaya dari belakang)">Backlight</option>
-                        <option value="silhouette">Silhouette</option>
-                        <option value="rembrandt lighting">Rembrandt Lighting</option>
-                        <option value="pencahayaan sinematik">Pencahayaan Sinematik</option>
-                        <option value="cahaya lembut (soft light)">Cahaya Lembut (Soft Light)</option>
-                        <option value="cahaya keras (hard light)">Cahaya Keras (Hard Light)</option>
-                    </select>
-                </div>
-
-                <div>
-                    <label for="style" class="block mb-2 text-sm font-medium text-gray-300">Style Video</label>
-                    <select id="style" class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-full p-2.5">
-                        <option selected value="">Pilih style video...</option>
-                        <option value="Sinematik 8K UHD">Sinematik 8K UHD</option>
-                        <option value="Gaya film dokumenter">Gaya Film Dokumenter</option>
-                        <option value="Footage drone">Footage Drone</option>
-                        <option value="Gaya Ghibli">Gaya Ghibli</option>
-                        <option value="Gaya Pixar">Gaya Pixar</option>
-                        <option value="Animasi 2D">Animasi 2D</option>
-                        <option value="Animasi 3D">Animasi 3D</option>
-                        <option value="Stop Motion">Stop Motion</option>
-                        <option value="Video hitam putih">Video Hitam Putih</option>
-                        <option value="Gaya film vintage">Gaya Film Vintage</option>
-                        <option value="Hyperrealistic">Hyperrealistic</option>
-                        <option value="Timelapse">Timelapse</option>
-                    </select>
-                </div>
-                
-                <div>
-                    <label for="suasana" class="block mb-2 text-sm font-medium text-gray-300">Suasana Video</label>
-                     <select id="suasana" class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-full p-2.5">
-                         <option selected value="">Pilih suasana...</option>
-                         <option value="tenang dan damai">Tenang & Damai</option>
-                         <option value="bahagia dan ceria">Bahagia & Ceria</option>
-                         <option value="sedih dan melankolis">Sedih & Melankolis</option>
-                         <option value="tegang dan menegangkan">Tegang & Menegangkan</option>
-                         <option value="misterius">Misterius</option>
-                         <option value="romantis">Romantis</option>
-                         <option value="epik dan megah">Epik & Megah</option>
-                         <option value="magis dan fantasi">Magis & Fantasi</option>
-                         <option value="nostalgia">Nostalgia</option>
-                         <option value="menyeramkan">Menyeramkan</option>
-                         <option value="energik dan bersemangat">Energik & Bersemangat</option>
-                     </select>
-                </div>
-
-                <div>
-                    <label for="backsound" class="block mb-2 text-sm font-medium text-gray-300">Backsound (Suara/Musik)</label>
-                    <input type="text" id="backsound" class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-full p-2.5" placeholder="Contoh: suara alam, musik lo-fi">
-                </div>
-
-                <div>
-                    <label for="kalimat" class="block mb-2 text-sm font-medium text-gray-300">Kalimat yang Diucapkan (Hanya Adegan Tunggal)</label>
-                    <input type="text" id="kalimat" class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-full p-2.5" placeholder="Contoh: 'Ini hari yang sempurna.'">
-                </div>
-
-                <div>
-                    <label for="detail" class="block mb-2 text-sm font-medium text-gray-300">Detail Tambahan</label>
-                    <input type="text" id="detail" class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-full p-2.5" placeholder="Contoh: hyperrealistic, fokus detail">
-                </div>
-                 <button id="generateBtn" class="w-full mt-4 text-white bg-indigo-600 hover:bg-indigo-700 focus:ring-4 focus:outline-none focus:ring-indigo-800 font-medium rounded-lg text-sm px-5 py-3 text-center transition-colors duration-300">
-                    Generate Prompt
-                </button>
+                <p class="text-sm text-gray-400">Putra dari Pasangan</p>
+                <p class="font-bold text-cream mt-1">Bpk. Suhendar Aris Munandar & Ibu Sartini (Bu Tono)</p>
             </div>
+        </section>
 
-            <div class="space-y-6">
-                <div class="bg-gray-800/50 p-6 rounded-xl border border-gray-700 flex flex-col">
-                    <h2 class="text-xl font-semibold text-white mb-4">Prompt Indonesia</h2>
-                    <textarea id="promptIndonesia" readonly rows="8" class="w-full text-sm rounded-lg p-3 flex-grow resize-none focus:outline-none prompt-textarea" placeholder="Hasil prompt dalam Bahasa Indonesia..."></textarea>
-                    <div class="flex mt-3 space-x-2">
-                        <button id="openGeminiIdBtn" class="flex-1 text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center transition-colors duration-300">
-                            Buka Gemini
-                        </button>
-                        <button id="copyBtnId" class="flex-1 text-white bg-teal-600 hover:bg-teal-700 focus:ring-4 focus:outline-none focus:ring-teal-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center transition-colors duration-300">
-                            Salin
-                        </button>
+        <!-- Dalil Section -->
+        <section class="py-20 px-6 relative">
+            <div class="max-w-3xl mx-auto text-center" data-aos="fade-up">
+                <i class="fas fa-quran text-4xl text-gold mb-6"></i>
+                <h3 class="text-gold font-jawa text-xl mb-6">Hadist Rasulullah SAW</h3>
+                <div class="bg-black/40 backdrop-blur-md p-6 md:p-10 rounded-xl shadow-lg border border-gold/30">
+                    <p class="italic font-serif text-lg leading-loose text-cream/90">
+                        "Sunah kebersihan/kesucian ada lima, yaitu berkhitan, memotong kuku, merapikan kumis, mencabut bulu ketiak, dan mencukur bulu kemaluan."
+                    </p>
+                    <p class="mt-4 text-gold font-bold text-sm">(H.R. Bukhari dan Muslim)</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Event Details with Countdown -->
+        <section class="py-20 px-6 text-center">
+            <div class="max-w-4xl mx-auto">
+                <h2 class="text-3xl font-jawa text-gold mb-8 border-b-2 border-gold inline-block pb-2" data-aos="fade-down">Rincian Acara</h2>
+
+                <!-- COUNTDOWN -->
+                <div class="mb-12" data-aos="zoom-in">
+                    <p class="text-sm uppercase tracking-widest text-gray-300 mb-4">Menuju Hari Bahagia:</p>
+                    <div id="countdown" class="flex flex-wrap justify-center gap-3 md:gap-6">
+                        <div class="countdown-box p-3 rounded-lg w-20 md:w-24 shadow-lg">
+                            <span id="days" class="text-2xl md:text-3xl font-bold text-gold block">00</span>
+                            <span class="text-xs uppercase">Hari</span>
+                        </div>
+                        <div class="countdown-box p-3 rounded-lg w-20 md:w-24 shadow-lg">
+                            <span id="hours" class="text-2xl md:text-3xl font-bold text-gold block">00</span>
+                            <span class="text-xs uppercase">Jam</span>
+                        </div>
+                        <div class="countdown-box p-3 rounded-lg w-20 md:w-24 shadow-lg">
+                            <span id="minutes" class="text-2xl md:text-3xl font-bold text-gold block">00</span>
+                            <span class="text-xs uppercase">Menit</span>
+                        </div>
+                        <div class="countdown-box p-3 rounded-lg w-20 md:w-24 shadow-lg">
+                            <span id="seconds" class="text-2xl md:text-3xl font-bold text-gold block">00</span>
+                            <span class="text-xs uppercase">Detik</span>
+                        </div>
                     </div>
                 </div>
 
-                <div class="bg-gray-800/50 p-6 rounded-xl border border-gray-700 flex flex-col">
-                    <h2 class="text-xl font-semibold text-white mb-4">Prompt English</h2>
-                    <textarea id="promptEnglish" readonly rows="8" class="w-full text-sm rounded-lg p-3 flex-grow resize-none focus:outline-none prompt-textarea" placeholder="Hasil terjemahan dalam Bahasa Inggris..."></textarea>
-                    <div class="flex mt-3 space-x-2">
-                         <button id="openGeminiEnBtn" class="flex-1 text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center transition-colors duration-300">
-                            Buka Gemini
-                        </button>
-                        <button id="copyBtnEn" class="flex-1 text-white bg-teal-600 hover:bg-teal-700 focus:ring-4 focus:outline-none focus:ring-teal-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center transition-colors duration-300">
-                            Salin
-                        </button>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <!-- Date -->
+                    <div class="bg-darkbrown/80 backdrop-blur p-6 rounded-lg shadow-xl border border-gold/20" data-aos="fade-up" data-aos-delay="0">
+                        <div class="w-16 h-16 bg-gold rounded-full flex items-center justify-center mx-auto mb-4 text-darkbrown text-2xl">
+                            <i class="far fa-calendar-alt"></i>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2 text-gold">Hari & Tanggal</h3>
+                        <p class="text-lg">Sabtu</p>
+                        <p class="text-2xl font-bold my-2">17 Januari 2026</p>
+                    </div>
+
+                    <!-- Time -->
+                    <div class="bg-darkbrown/80 backdrop-blur p-6 rounded-lg shadow-xl border border-gold/20" data-aos="fade-up" data-aos-delay="100">
+                        <div class="w-16 h-16 bg-gold rounded-full flex items-center justify-center mx-auto mb-4 text-darkbrown text-2xl">
+                            <i class="far fa-clock"></i>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2 text-gold">Waktu Acara</h3>
+                        <p class="text-lg">Pukul</p>
+                        <p class="text-2xl font-bold my-2">Bebas</p>
+                        <p class="text-sm opacity-80">(Sampai Selesai)</p>
+                    </div>
+
+                    <!-- Location -->
+                    <div class="bg-darkbrown/80 backdrop-blur p-6 rounded-lg shadow-xl border border-gold/20" data-aos="fade-up" data-aos-delay="200">
+                        <div class="w-16 h-16 bg-gold rounded-full flex items-center justify-center mx-auto mb-4 text-darkbrown text-2xl">
+                            <i class="fas fa-map-marked-alt"></i>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2 text-gold">Lokasi</h3>
+                        <p class="text-sm mb-4 leading-relaxed">
+                            Perum Nirwana Mayong Asri<br>RT 007 RW 003, Ds. Sengonbugel<br>Kec. Mayong
+                        </p>
+                        <a href="https://maps.app.goo.gl/PkNUCdkwkEZN3ZJU9" target="_blank" class="inline-block px-6 py-2 bg-gold text-darkbrown font-bold rounded-full hover:bg-cream transition-colors text-sm transform hover:scale-105 duration-200">
+                            <i class="fas fa-location-arrow mr-1"></i> Buka Peta
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Entertainment -->
+                <div class="mt-12" data-aos="fade-up">
+                    <div class="inline-block border border-gold px-8 py-4 rounded-lg bg-black/40 backdrop-blur">
+                        <h4 class="text-gold font-jawa text-lg mb-2">Hiburan</h4>
+                        <p class="text-xl font-bold"><i class="fas fa-music mr-2"></i> Organ Tunggal</p>
                     </div>
                 </div>
             </div>
-        </div>
+        </section>
+
+        <!-- Doa & Closing -->
+        <section class="py-20 px-6 relative text-center">
+            <div class="max-w-2xl mx-auto bg-darkbrown/70 p-8 rounded-2xl border border-gold/20 backdrop-blur-sm" data-aos="zoom-in">
+                <p class="text-base md:text-lg leading-relaxed mb-8 italic">
+                    "Semoga setelah melakukan khitan, putra kami dapat menjadi anak yang saleh, berbakti kepada kedua orang tua, agama, masyarakat, bangsa, dan negara. Amin ya Rabbal’alamin."
+                </p>
+                
+                <p class="mb-8">
+                    Atas kehadiran dan do’a restu Bapak/Ibu/Saudara/i, kami ucapkan terimakasih.
+                </p>
+
+                <h3 class="text-gold font-jawa mb-4">Wassalamu’alaikum Warahmatullahi Wabarakatuh</h3>
+                
+                <div class="mt-12 p-6 border-t border-gold/30">
+                    <p class="text-sm uppercase tracking-widest text-gray-400 mb-2">Hormat Kami</p>
+                    <p class="text-2xl font-script text-gold">Bpk. Suhendar Aris Munandar</p>
+                    <p class="text-xl font-script text-gold">& Ibu Sartini (Bu Tono)</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="bg-black py-6 text-center text-xs text-gray-600">
+            <p>© 2026 Walimatul Khitan Abizhar. Created with Love.</p>
+        </footer>
+
     </main>
 
-    <div id="guideModal" class="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex justify-center items-center z-50 hidden">
-        <div class="bg-gray-800 text-gray-300 rounded-lg shadow-2xl p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-xl font-bold text-white">Panduan Membuat Prompt</h2>
-                <button id="closeGuideBtn" class="text-gray-400 hover:text-white text-3xl">&times;</button>
-            </div>
-            <div class="prose prose-invert max-w-none">
-                <p>...</p>
-            </div>
-        </div>
-    </div>
-    
-    <div id="characterCreatorModal" class="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex justify-center items-center z-50 hidden">
-        <div class="bg-gray-800 text-gray-300 rounded-lg shadow-2xl p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-xl font-bold text-white">Kreator Karakter Custom</h2>
-                <button id="closeCharacterCreatorBtn" class="text-gray-400 hover:text-white text-3xl">&times;</button>
-            </div>
-            <div class="space-y-4">
-                <p class="text-sm text-gray-400">Unggah gambar untuk setiap bagian dan pilih gaya yang diinginkan. Biaya: 3 Koin.</p>
-                <div>
-                    <label for="characterStyle" class="block mb-2 text-sm font-medium text-gray-300">Pilih Gaya Karakter</label>
-                    <select id="characterStyle" class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-full p-2.5">
-                        <option value="Non Fiksi" selected>Non Fiksi</option>
-                        <option value="Fiksi">Fiksi</option>
-                    </select>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                        <label class="block mb-2 text-sm font-medium text-gray-300">1. Wajah</label>
-                        <div id="upload-container-face" class="mt-1 flex justify-center px-6 py-5 border-2 border-gray-600 border-dashed rounded-md">
-                            <div class="space-y-1 text-center">
-                                <img id="preview-face" src="" class="hidden max-h-24 mx-auto mb-2 rounded"/>
-                                <svg id="icon-face" class="mx-auto h-12 w-12 text-gray-500" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true"><path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 4v.01M28 8l-6-6-6 6M28 8v12a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32 4l-6-6-6 6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-                                <div class="flex text-xs text-gray-400"><label for="input-face" class="relative cursor-pointer bg-gray-700 rounded-md font-medium text-indigo-400 hover:text-indigo-300 px-1"><span>Unggah</span><input id="input-face" type="file" class="sr-only" accept="image/*"></label></div>
-                            </div>
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block mb-2 text-sm font-medium text-gray-300">2. Pakaian</label>
-                        <div id="upload-container-clothing" class="mt-1 flex justify-center px-6 py-5 border-2 border-gray-600 border-dashed rounded-md">
-                            <div class="space-y-1 text-center">
-                                <img id="preview-clothing" src="" class="hidden max-h-24 mx-auto mb-2 rounded"/>
-                                <svg id="icon-clothing" class="mx-auto h-12 w-12 text-gray-500" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true"><path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 4v.01M28 8l-6-6-6 6M28 8v12a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32 4l-6-6-6 6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-                                <div class="flex text-xs text-gray-400"><label for="input-clothing" class="relative cursor-pointer bg-gray-700 rounded-md font-medium text-indigo-400 hover:text-indigo-300 px-1"><span>Unggah</span><input id="input-clothing" type="file" class="sr-only" accept="image/*"></label></div>
-                            </div>
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block mb-2 text-sm font-medium text-gray-300">3. Aksesori</label>
-                        <div id="upload-container-accessories" class="mt-1 flex justify-center px-6 py-5 border-2 border-gray-600 border-dashed rounded-md">
-                            <div class="space-y-1 text-center">
-                                <img id="preview-accessories" src="" class="hidden max-h-24 mx-auto mb-2 rounded"/>
-                                <svg id="icon-accessories" class="mx-auto h-12 w-12 text-gray-500" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true"><path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 4v.01M28 8l-6-6-6 6M28 8v12a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32 4l-6-6-6 6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-                                <div class="flex text-xs text-gray-400"><label for="input-accessories" class="relative cursor-pointer bg-gray-700 rounded-md font-medium text-indigo-400 hover:text-indigo-300 px-1"><span>Unggah</span><input id="input-accessories" type="file" class="sr-only" accept="image/*"></label></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <button id="createCharacterBtn" class="w-full mt-4 text-white bg-emerald-600 hover:bg-emerald-700 focus:ring-4 focus:outline-none focus:ring-emerald-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center transition-colors duration-300" disabled>
-                    Buat Karakter & Isi Subjek
-                </button>
-            </div>
-        </div>
-    </div>
+    <!-- Scripts -->
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        const coverPage = document.getElementById('cover-page');
+        const mainContent = document.getElementById('main-content');
+        const musicBtn = document.getElementById('music-btn');
+        const musicIcon = document.getElementById('music-icon');
+        const audio = document.getElementById('bg-music');
+        let isPlaying = false;
 
-    <div id="loadCharacterModal" class="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex justify-center items-center z-50 hidden">
-        <div class="bg-gray-800 text-gray-300 rounded-lg shadow-2xl p-6 w-full max-w-lg">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-xl font-bold text-white">Muat Karakter</h2>
-                <button id="closeLoadCharacterBtn" class="text-gray-400 hover:text-white text-3xl">&times;</button>
-            </div>
-            <div id="characterList" class="space-y-2 max-h-96 overflow-y-auto">
-            </div>
-        </div>
-    </div>
+        function bukaUndangan() {
+            coverPage.classList.add('cover-hidden');
+            mainContent.classList.remove('hidden');
+            setTimeout(() => {
+                mainContent.classList.remove('opacity-0');
+            }, 100);
+            document.body.style.overflow = 'auto';
+            musicBtn.classList.remove('hidden');
+            playMusic();
+        }
 
-    <footer class="text-center p-4 mt-8">
-        <a href="https://t.me/+GbpYVm-4ymQ3ZjFl" target="_blank" rel="noopener noreferrer" class="inline-flex items-center text-gray-400 hover:text-white transition-colors duration-300 mx-2">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="inline-block mr-1.5 align-text-bottom" viewBox="0 0 24 24">
-              <path d="m21.435 2.585-4.52 18.065c-.243 1.055-1.748.88-1.992-.17L13.195 13.2l-7.23-1.728c-1.11-.26-1.07-1.785.04-2.025L21.435 2.585Z" />
-              <path d="m21.435 2.585-11.02 9.638-3.187-7.245L21.435 2.585Z"/>
-            </svg>
-            Join Us On Telegram
-        </a>
-    </footer>
+        function playMusic() {
+            const playPromise = audio.play();
+            if (playPromise !== undefined) {
+                playPromise.then(_ => {
+                    isPlaying = true;
+                    musicIcon.classList.add('spin-slow');
+                    musicIcon.classList.remove('fa-play');
+                    musicIcon.classList.add('fa-compact-disc');
+                })
+                .catch(error => {
+                    console.log("Autoplay dicegah oleh browser.");
+                    isPlaying = false;
+                    musicIcon.classList.remove('spin-slow');
+                    musicIcon.classList.add('fa-play');
+                    musicIcon.classList.remove('fa-compact-disc');
+                });
+            }
+        }
 
-    <script src="script.js" defer></script>
+        function toggleMusic() {
+            if (isPlaying) {
+                audio.pause();
+                isPlaying = false;
+                musicIcon.classList.remove('spin-slow');
+                musicIcon.classList.remove('fa-compact-disc');
+                musicIcon.classList.add('fa-play');
+            } else {
+                audio.play();
+                isPlaying = true;
+                musicIcon.classList.add('spin-slow');
+                musicIcon.classList.remove('fa-play');
+                musicIcon.classList.add('fa-compact-disc');
+            }
+        }
 
+        document.addEventListener('DOMContentLoaded', function() {
+            AOS.init({ duration: 1000, once: true });
+
+            const countDownDate = new Date("Jan 17, 2026 00:00:00").getTime();
+            const x = setInterval(function() {
+                const now = new Date().getTime();
+                const distance = countDownDate - now;
+
+                const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+                const elDays = document.getElementById("days");
+                if (elDays) {
+                    elDays.innerText = days < 10 ? "0" + days : days;
+                    document.getElementById("hours").innerText = hours < 10 ? "0" + hours : hours;
+                    document.getElementById("minutes").innerText = minutes < 10 ? "0" + minutes : minutes;
+                    document.getElementById("seconds").innerText = seconds < 10 ? "0" + seconds : seconds;
+                }
+
+                if (distance < 0) {
+                    clearInterval(x);
+                    const cdDiv = document.getElementById("countdown");
+                    if (cdDiv) cdDiv.innerHTML = "<p class='text-gold text-xl font-bold'>Alhamdulillah, Acara Telah Dilaksanakan</p>";
+                }
+            }, 1000);
+        });
+
+        document.body.style.overflow = 'hidden';
+    </script>
 </body>
 </html>
+
+
