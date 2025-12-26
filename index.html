@@ -75,8 +75,6 @@
 
         /* Animations */
         .spin-slow { animation: spin 4s linear infinite; }
-        
-        /* Rotasi Sangat Pelan untuk Ornamen Utama */
         .spin-very-slow { animation: spin 20s linear infinite; }
         
         @keyframes spin { from {transform: rotate(0deg);} to {transform: rotate(360deg);} }
@@ -110,7 +108,8 @@
 
     <!-- Audio Player -->
     <audio id="bg-music" loop preload="auto">
-        <source src="https://cdn.pixabay.com/download/audio/2022/03/24/audio_c8c8a73467.mp3?filename=gamelan-java-14446.mp3" type="audio/mpeg">
+        <!-- Menggunakan link raw dari GitHub yang Anda berikan -->
+        <source src="https://raw.githubusercontent.com/saikudosai/veo3promptcoba/cf756de5e732b553452446c642ee6993084a61aa/free-quotjavanese-vibesquot-gamelan-music-music-for-creator-383176.mp3" type="audio/mpeg">
     </audio>
 
     <!-- Music Control Button -->
@@ -121,8 +120,7 @@
     <!-- COVER PAGE -->
     <div id="cover-page" class="fixed inset-0 flex flex-col justify-center items-center text-center p-6 h-screen w-full bg-darkbrown/95">
         
-        <!-- DEKORASI BARU (BERPUTAR PELAN) -->
-        <!-- Ukuran disesuaikan (w-64) agar pas dan proporsional -->
+        <!-- DEKORASI BERPUTAR -->
         <div class="mb-8 w-64 h-64 flex items-center justify-center">
             <img src="https://github.com/saikudosai/veo3promptcoba/blob/image/Bg3-removebg-preview.png?raw=true" 
                  alt="Ornamen Adat" 
@@ -303,19 +301,27 @@
         const audio = document.getElementById('bg-music');
         let isPlaying = false;
 
+        // --- FUNGSI UTAMA: BUKA UNDANGAN & PUTAR MUSIK ---
         function bukaUndangan() {
+            // 1. Putar Musik Dulu (Agar dianggap interaksi user)
+            playMusic();
+            
+            // 2. Animasi Buka Halaman
             coverPage.classList.add('cover-hidden');
             mainContent.classList.remove('hidden');
             setTimeout(() => {
                 mainContent.classList.remove('opacity-0');
             }, 100);
+            
+            // 3. Aktifkan Scroll & Tombol Kontrol Musik
             document.body.style.overflow = 'auto';
             musicBtn.classList.remove('hidden');
-            playMusic();
         }
 
         function playMusic() {
+            audio.volume = 0.6; // Set volume 60% agar tidak kaget
             const playPromise = audio.play();
+            
             if (playPromise !== undefined) {
                 playPromise.then(_ => {
                     isPlaying = true;
@@ -324,11 +330,9 @@
                     musicIcon.classList.add('fa-compact-disc');
                 })
                 .catch(error => {
-                    console.log("Autoplay dicegah oleh browser.");
+                    console.log("Autoplay dicegah oleh browser: ", error);
+                    // Jangan ubah icon jika gagal, biarkan user klik manual nanti
                     isPlaying = false;
-                    musicIcon.classList.remove('spin-slow');
-                    musicIcon.classList.add('fa-play');
-                    musicIcon.classList.remove('fa-compact-disc');
                 });
             }
         }
@@ -378,6 +382,7 @@
             }, 1000);
         });
 
+        // Kunci scroll saat awal load
         document.body.style.overflow = 'hidden';
     </script>
 </body>
